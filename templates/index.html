@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helmet Detection System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: #333 !important;
+        }
+        
+        .main-container {
+            margin-top: 100px;
+            padding: 20px;
+        }
+        
+        /* Make feature cards equal height and distribute content */
+        .feature-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 320px; /* ensure equal height */
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .btn-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .stats-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .video-stream {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        /* Make upload area fill card and center content */
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            border: 2px dashed rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            background: rgba(0,0,0,0.02);
+            cursor: pointer;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-filename {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #555;
+            word-break: break-all;
+        }
+
+        /* New small stat cards row */
+        .sub-stats .stats-card {
+            margin-bottom: 10px;
+        }
+        
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .violation-alert {
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        .safe-alert {
+            background: rgba(25, 135, 84, 0.9);
+            color: white;
+        }
+
+        /* ensure feature cards fill column height and upload area expands */
+        .feature-card {
+            height: 100%;
+        }
+
+        /* make upload area grow to fill card's available space */
+        .feature-card .upload-area {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ensure columns stretch to equal height in the row */
+        .features-row.align-items-stretch {
+            align-items: stretch;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-hard-hat me-2"></i>
+                Helmet Detection System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/live"><i class="fas fa-video me-1"></i>Phát hiện trực tiếp</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/results"><i class="fas fa-chart-bar me-1"></i>Kết quả</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-container">
+        <!-- Trang chủ -->
+        {% if request.endpoint == 'index' %}
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center mb-5">
+                <h1 class="display-4 text-white mb-4">
+                    <i class="fas fa-hard-hat"></i>
+                    Hệ thống phát hiện mũ bảo hộ
+                </h1>
+                <p class="lead text-white">Sử dụng AI để đảm bảo an toàn lao động</p>
+            </div>
+        </div>
+        
+        <div class="row features-row align-items-stretch">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card text-center">
+                    <i class="fas fa-camera feature-icon"></i>
+                    <h3>Phát hiện trực tiếp</h3>
+                    <p>Sử dụng camera để phát hiện vi phạm an toàn theo thời gian thực</p>
+                    <a href="/live" class="btn btn-custom">
+                        <i class="fas fa-play me-2"></i>Bắt đầu
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card text-center">
+                    <i class="fas fa-upload feature-icon"></i>
+                    <h3>Upload file</h3>
+                    <p>Tải lên ảnh hoặc video để phân tích và phát hiện vi phạm</p>
+                    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-cloud-upload-alt fa-2x mb-3"></i>
+                        <p>Click hoặc kéo thả file vào đây</p>
+                        <input type="file" id="fileInput" style="display: none;" accept="image/*,video/*">
+                    </div>
+
+                    <!-- NEW: vùng hiển thị kết quả upload (thumbnail + thông tin) -->
+                    <div id="uploadResultContainer" class="mt-3" style="min-height:60px;"></div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="feature-card text-center">
+                    <i class="fas fa-chart-line feature-icon"></i>
+                    <h3>Thống kê</h3>
+                    <p>Xem báo cáo chi tiết về tình hình an toàn lao động</p>
+                    <a href="/results" class="btn btn-custom">
+                        <i class="fas fa-chart-bar me-2"></i>Xem báo cáo
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Thống kê tổng quan -->
+        <div class="row mt-5">
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-number" id="totalViolations">0</div>
+                    <div>Vi phạm phát hiện</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-number" id="totalDetections">0</div>
+                    <div>Tổng lần quét</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-number" id="violationRate">0%</div>
+                    <div>Tỷ lệ vi phạm</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-number">
+                        <i class="fas fa-shield-alt text-success"></i>
+                    </div>
+                    <div>An toàn lao động</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-stats: Uploads vs Live captures -->
+        <div class="row mt-3 sub-stats">
+            <div class="col-md-6">
+                <div class="stats-card">
+                    <div class="text-muted">Uploads đã xử lý</div>
+                    <div class="stats-number" id="uploadsProcessed">0</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stats-card">
+                    <div class="text-muted">Live captures (chụp)</div>
+                    <div class="stats-number" id="liveProcessed">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Thêm bảng kết quả gần đây -->
+        <div class="row mt-4">
+            <div class="col-lg-8 mx-auto">
+                <div class="feature-card">
+                    <h5>Kết quả phát hiện gần đây</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="recentResultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Loại</th>
+                                    <th>Vi phạm</th>
+                                    <th>Độ tin cậy</th>
+                                    <th>Ảnh</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentResultsBody">
+                                <!-- Kết quả sẽ được JS cập nhật -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Trang phát hiện trực tiếp -->
+        {% if request.endpoint == 'live_detection' %}
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="feature-card">
+                    <h3><i class="fas fa-video me-2"></i>Camera trực tiếp</h3>
+                    <div class="video-container">
+                        <img id="videoStream" src="" class="video-stream" style="display: none;">
+                        <div id="videoPlaceholder" class="text-center p-5">
+                            <i class="fas fa-video fa-4x mb-3" style="color: #ccc;"></i>
+                            <p>Nhấn "Bắt đầu" để kích hoạt camera</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <button id="startBtn" class="btn btn-custom me-2">
+                            <i class="fas fa-play me-2"></i>Bắt đầu
+                        </button>
+                        <button id="stopBtn" class="btn btn-outline-danger" style="display: none;">
+                            <i class="fas fa-stop me-2"></i>Dừng
+                        </button>
+                        <button id="resetBtn" class="btn btn-outline-warning ms-2">
+                            <i class="fas fa-refresh me-2"></i>Reset thống kê
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="feature-card">
+                    <h4><i class="fas fa-tachometer-alt me-2"></i>Thống kê thời gian thực</h4>
+                    <div class="stats-card bg-primary">
+                        <div class="stats-number" id="liveViolations">0</div>
+                        <div>Vi phạm hiện tại</div>
+                    </div>
+                    <div class="stats-card bg-info">
+                        <div class="stats-number" id="liveDetections">0</div>
+                        <div>Tổng lần quét</div>
+                    </div>
+                    <div class="stats-card bg-warning">
+                        <div class="stats-number" id="liveRate">0%</div>
+                        <div>Tỷ lệ vi phạm</div>
+                    </div>
+                    
+                    <div id="alertContainer" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Trang kết quả -->
+        {% if request.endpoint == 'results' %}
+        <div class="row">
+            <div class="col-12">
+                <div class="feature-card">
+                    <h3><i class="fas fa-chart-bar me-2"></i>Báo cáo kết quả</h3>
+                    
+                    <div class="row mt-4">
+                        <div class="col-lg-6">
+                            <h5>Lịch sử phát hiện gần đây</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Thời gian</th>
+                                            <th>Loại</th>
+                                            <th>Vi phạm</th>
+                                            <th>Độ tin cậy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for violation in violations %}
+                                        <tr>
+                                            <td>{{ violation.timestamp }}</td>
+                                            <td>{{ violation.type }}</td>
+                                            <td><span class="badge bg-danger">{{ violation.violations }}</span></td>
+                                            <td>{{ "%.2f"|format(violation.confidence) }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        
+                        <div class="col-lg-6">
+                            <h5>Ảnh vi phạm</h5>
+                            <div class="row">
+                                {% for image in violation_images[-12:] %}
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <div class="card">
+                                        <img src="/violations/{{ image }}" class="card-img-top" style="height: 120px; object-fit: cover;" onclick="showImageModal(this.src)">
+                                        <div class="card-body p-2">
+                                            <small class="text-muted">{{ image.split('_')[1] if '_' in image else image }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal hiển thị ảnh -->
+    <div class="modal fade" id="imageModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ảnh vi phạm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal (kept but not relied on) -->
+    <div class="modal fade" id="progressModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Đang xử lý file...</h5>
+                    <p id="progressText">Vui lòng chờ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Non-blocking upload overlay (small corner widget, pointer-events:none để không chặn) -->
+    <div id="uploadOverlay" style="display:none; position:fixed; right:16px; bottom:16px; z-index:2000; pointer-events:none;">
+        <div style="background:rgba(255,255,255,0.95); border-radius:8px; padding:10px 14px; box-shadow:0 6px 18px rgba(0,0,0,0.12); display:flex; align-items:center; gap:10px;">
+            <div class="spinner-border text-primary" role="status" style="width:1.6rem; height:1.6rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div style="font-size:0.95rem; color:#222;">Đang xử lý...</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let isDetecting = false;
+        let statsInterval;
+
+        // Load initial stats
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadRecentResults();
+            
+            // File upload handler
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', handleFileUpload);
+            }
+            
+            // Drag and drop
+            const uploadArea = document.querySelector('.upload-area');
+            if (uploadArea) {
+                uploadArea.addEventListener('dragover', handleDragOver);
+                uploadArea.addEventListener('dragleave', handleDragLeave);
+                uploadArea.addEventListener('drop', handleDrop);
+            }
+            
+            // Live detection buttons
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            if (startBtn) startBtn.addEventListener('click', startCamera);
+            if (stopBtn) stopBtn.addEventListener('click', stopCamera);
+            if (resetBtn) resetBtn.addEventListener('click', resetStats);
+        });
+
+        // Load statistics
+        function loadStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(data => {
+                    updateStats(data);
+                })
+                .catch(error => console.error('Error loading stats:', error));
+        }
+
+        // Update statistics display
+        function updateStats(data) {
+            const elements = {
+                'totalViolations': data.violation_count,
+                'totalDetections': data.total_detections,
+                'violationRate': data.violation_rate.toFixed(1) + '%',
+                'liveViolations': data.violation_count,
+                'liveDetections': data.total_detections,
+                'liveRate': data.violation_rate.toFixed(1) + '%'
+            };
+            
+            Object.entries(elements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            });
+        }
+
+        // Load recent results for statistics
+        function loadRecentResults() {
+            fetch('/recent_results')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('recentResultsBody');
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+
+                    // compute counts by type
+                    let uploads = 0, captures = 0;
+                    (data.results || []).forEach(item => {
+                        if (item.type === 'upload') uploads++;
+                        if (item.type === 'capture') captures++;
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${item.timestamp}</td>
+                                <td>${item.type}</td>
+                                <td>${item.violations}</td>
+                                <td>${item.confidence ? (item.confidence * 100).toFixed(1) + '%' : '-'}</td>
+                                <td>
+                                    <img src="/violations/${item.image}" style="height:40px;border-radius:4px;cursor:pointer;" onclick="showImageModal('/violations/${item.image}')">
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    // update sub-stats
+                    const uploadsEl = document.getElementById('uploadsProcessed');
+                    const liveEl = document.getElementById('liveProcessed');
+                    if (uploadsEl) uploadsEl.textContent = uploads;
+                    if (liveEl) liveEl.textContent = captures;
+                })
+                .catch(err => {
+                    console.error('Error loading recent results', err);
+                });
+        }
+
+        // File upload handling
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // show filename in upload area
+                const filenameEl = document.querySelector('.upload-filename');
+                if (filenameEl) filenameEl.textContent = file.name;
+                uploadFile(file);
+            }
+        }
+
+        // Drag and drop handling
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        }
+
+        // --- replace modal usage with overlay helpers ---
+        function showUploadOverlay(){ const el=document.getElementById('uploadOverlay'); if(el) el.style.display='block'; }
+        function hideUploadOverlay(){ const el=document.getElementById('uploadOverlay'); if(el) el.style.display='none'; }
+
+        // replace uploadFile + pollUploadStatus with synchronous upload flow
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showUploadOverlay();
+
+            fetch('/upload', { method: 'POST', body: formData })
+            .then(async res => {
+                const data = await res.json().catch(()=>{ throw new Error('Invalid JSON response'); });
+                hideUploadOverlay();
+
+                if (!data.success) {
+                    showAlert('Lỗi: ' + (data.error || 'Upload failed'), 'danger');
+                    return;
+                }
+
+                showAlert(`Phát hiện ${data.violations_detected} vi phạm`, data.violations_detected > 0 ? 'danger' : 'success');
+
+                // Prefer server-stored image
+                if (data.result_filename) {
+                    showResultImage(`/violations/${data.result_filename}`, data.result_image);
+                } else if (data.result_image) {
+                    showResultImage(data.result_image);
+                }
+
+                loadStats();
+                loadRecentResults();
+            })
+            .catch(err => {
+                hideUploadOverlay();
+                showAlert('Lỗi upload file: ' + (err.message || err), 'danger');
+                console.error('Upload error:', err);
+            });
+        }
+
+        // showResultImage accepts a server URL or data URL; optional thumbData for immediate display
+        function showResultImage(imageSrc, thumbData) {
+            const container = document.getElementById('uploadResultContainer');
+            if (!container) {
+                console.warn('uploadResultContainer not found, appending to upload-area parent');
+                const uploadArea = document.querySelector('.upload-area').parentElement;
+                uploadArea.innerHTML += `<div class="mt-3"><img src="${imageSrc}" class="img-fluid rounded" onclick="showImageModal('${imageSrc}')"></div>`;
+                return;
+            }
+
+            // build small card with thumbnail + link to modal
+            const html = `
+                <div class="d-flex align-items-center gap-3">
+                    <img src="${thumbData || imageSrc}" style="width:120px; height:80px; object-fit:cover; border-radius:8px; cursor:pointer;" onclick="showImageModal('${imageSrc}')">
+                    <div>
+                        <div style="font-weight:600;">Kết quả upload</div>
+                        <div class="text-muted small">Xem ảnh để kiểm tra</div>
+                        <div class="mt-2"><button class="btn btn-sm btn-outline-primary" onclick="showImageModal('${imageSrc}')">Mở ảnh</button></div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+            // update last thumb on main live page if present
+            const lastThumb = document.getElementById('lastThumb');
+            if (lastThumb) {
+                lastThumb.src = thumbData ? thumbData : imageSrc;
+                lastThumb.style.display = 'block';
+            }
+        }
+
+        // Camera functions
+        function startCamera() {
+            fetch('/start_camera')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        isDetecting = true;
+                        document.getElementById('startBtn').style.display = 'none';
+                        document.getElementById('stopBtn').style.display = 'inline-block';
+                        
+                        // Start video stream
+                        const videoStream = document.getElementById('videoStream');
+                        const placeholder = document.getElementById('videoPlaceholder');
+                        
+                        if (videoStream && placeholder) {
+                            videoStream.src = '/video_feed';
+                            videoStream.style.display = 'block';
+                            placeholder.style.display = 'none';
+                        }
+                        
+                        // Start stats updating
+                        statsInterval = setInterval(loadStats, 1000);
+                        
+                        showAlert('Camera đã được kích hoạt', 'success');
+                    } else {
+                        showAlert('Lỗi: ' + data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showAlert('Lỗi kết nối camera: ' + error.message, 'danger');
+                });
+        }
+
+        function stopCamera() {
+            fetch('/stop_camera')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        isDetecting = false;
+                        document.getElementById('startBtn').style.display = 'inline-block';
+                        document.getElementById('stopBtn').style.display = 'none';
+                        
+                        // Stop video stream
+                        const videoStream = document.getElementById('videoStream');
+                        const placeholder = document.getElementById('videoPlaceholder');
+                        
+                        if (videoStream && placeholder) {
+                            videoStream.src = '';
+                            videoStream.style.display = 'none';
+                            placeholder.style.display = 'block';
+                        }
+                        
+                        // Stop stats updating
+                        if (statsInterval) {
+                            clearInterval(statsInterval);
+                        }
+                        
+                        showAlert('Camera đã được dừng', 'info');
+                    } else {
+                        showAlert('Lỗi: ' + data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showAlert('Lỗi dừng camera: ' + error.message, 'danger');
+                });
+        }
+
+        function resetStats() {
+            if (confirm('Bạn có chắc muốn reset tất cả thống kê?')) {
+                fetch('/reset_stats')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadStats();
+                            showAlert('Thống kê đã được reset', 'success');
+                        } else {
+                            showAlert('Lỗi reset thống kê', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        showAlert('Lỗi: ' + error.message, 'danger');
+                    });
+            }
+        }
+
+        // Alert functions
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer') || document.body;
+            const alertClass = type === 'danger' ? 'violation-alert' : 'safe-alert';
+            
+            const alertHtml = `
+                <div class="alert alert-custom ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'danger' ? 'exclamation-triangle' : 'check-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertContainer.innerHTML = alertHtml + alertContainer.innerHTML;
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const alert = alertContainer.querySelector('.alert');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Image modal
+        function showImageModal(src) {
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            document.getElementById('modalImage').src = src;
+            modal.show();
+        }
+
+        // Notification for violations
+        function checkForViolations() {
+            // This would be called periodically during live detection
+            // to show real-time violation alerts
+        }
+
+        // Auto refresh stats on results page
+        if (window.location.pathname === '/results') {
+            setInterval(loadStats, 5000);
+        }
+    </script>
+</body>
+</html>
